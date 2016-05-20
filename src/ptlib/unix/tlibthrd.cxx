@@ -693,21 +693,38 @@ void PThread::PXSetWaitingSemaphore(PSemaphore * sem)
 }
 #endif
 
-
-// Normal Posix threads version
 void PThread::Sleep(const PTimeInterval & timeout)
 {
-  struct timespec ts;
-  ts.tv_sec = timeout.GetSeconds();
-  ts.tv_nsec = timeout.GetMilliSeconds()*1000000;
+    const PInt64 milliSeconds = timeout.GetMilliSeconds();
+    const long seconds = timeout.GetSeconds();
 
-  while (nanosleep(&ts, &ts) < 0 && errno == EINTR) {
+    struct timespec requiredTime;
+    requiredTime.tv_sec = seconds;
+    requiredTime.tv_nsec = (milliSeconds - 1000*seconds)*1000000;
+
+    do
+    {
+        struct timespec remainingTime = {};
+        const int sleepResult = nanosleep(&requiredTime, &remainingTime);
+        if (0 == sleepResult)
+        {
+            break;
+        }
+
+        const int lastError = errno;
+        if (EINTR != lastError)
+        {
+            PTRACE(4, "PTLib\tThread id=0x" << hex << m_threadId << dec << " nanosleep failed; errno = " << lastError);
+            break;
+        }
+
 #if P_USE_THREAD_CANCEL
-    pthread_testcancel();
+        pthread_testcancel();
 #endif
-  }
+        requiredTime = remainingTime;
+    }
+    while (true);
 }
-
 
 void PThread::Yield()
 {
