@@ -67,9 +67,9 @@ class PSemaphore;
  */
 class PThread : public PObject
 {
-  PCLASSINFO(PThread, PObject);
+    PCLASSINFO(PThread, PObject)
 
-  public:
+public:
   /**@name Construction */
   //@{
     /// Codes for thread priorities.
@@ -367,21 +367,19 @@ class PThread : public PObject
     };
     friend class LocalStorageBase;
 
-  private:
-    PThread(bool isProcess);
+private:
     // Create a new thread instance as part of a <code>PProcess</code> class.
+    PThread(bool isProcess);
 
     void InternalDestroy();
 
+    // So a PProcess can get at PThread() constructor but nothing else.
     friend class PProcess;
     friend class PExternalThread;
-    // So a PProcess can get at PThread() constructor but nothing else.
 
-    PThread(const PThread &) : PObject () { }
-    // Empty constructor to prevent copying of thread instances.
-
-    PThread & operator=(const PThread &) { return *this; }
-    // Empty assignment operator to prevent copying of thread instances.
+    // forbid copying PThreads
+    PThread(PThread const &);
+    void operator =(PThread const &);
 
   protected:
     enum Type { e_IsAutoDelete, e_IsManualDelete, e_IsProcess, e_IsExternal } m_type;
