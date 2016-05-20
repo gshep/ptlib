@@ -714,7 +714,8 @@ void PThread::Sleep(const PTimeInterval & timeout)
         const int lastError = errno;
         if (EINTR != lastError)
         {
-            PTRACE(4, "PTLib\tThread id=0x" << hex << PThread::GetCurrentThreadId() << dec << " nanosleep failed; errno = " << lastError);
+            // TODO
+            //PTRACE(4, "PTLib\tThread id=0x" << hex << PThread::GetCurrentThreadId() << dec << " nanosleep failed; errno = " << lastError);
             break;
         }
 
