@@ -1398,20 +1398,32 @@ bool PIPSocket::InternalListen(const Address & bindAddr,
                                WORD newPort,
                                Reusability reuse)
 {
-  // make sure we have a port
-  if (newPort != 0)
-    port = newPort;
+    // make sure we have a port
+    if (newPort != 0)
+    {
+        port = newPort;
+    }
 
-  PIPSocket::sockaddr_wrapper sa(bindAddr, port);
+    PIPSocket::sockaddr_wrapper sa(bindAddr, port);
+    if (IsOpen())
+    {
+        // the bindAddr address family might change.
+        int socketType;
+        if (!GetOption(SO_TYPE, socketType, SOL_SOCKET) || sa->sa_family != socketType)
+        {
+            os_close();
+        }
+    }
 
-  // Always close and re-open as the bindAddr address family might change.
-  os_close();
-
-  // attempt to create a socket
-  if (!OpenSocket(sa->sa_family)) {
-    PTRACE(4, "OpenSocket failed");
-    return false;
-  }
+    if (!IsOpen())
+    {
+        // attempt to create a socket
+        if (!OpenSocket(sa->sa_family))
+        {
+            PTRACE(4, "OpenSocket (" << bindAddr << ":" << newPort << ") failed");
+            return false;
+        }
+    }
 
   int reuseAddr = reuse == CanReuseAddress ? 1 : 0;
   if (!SetOption(SO_REUSEADDR, reuseAddr)) {
