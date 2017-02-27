@@ -1425,43 +1425,49 @@ bool PIPSocket::InternalListen(const Address & bindAddr,
         }
     }
 
-  int reuseAddr = reuse == CanReuseAddress ? 1 : 0;
-  if (!SetOption(SO_REUSEADDR, reuseAddr)) {
-    PTRACE(4, "SetOption(SO_REUSEADDR," << reuseAddr << ") failed: " << GetErrorText());
-    os_close();
-    return false;
-  }
+    int reuseAddr = reuse == CanReuseAddress ? 1 : 0;
+    if (!SetOption(SO_REUSEADDR, reuseAddr))
+    {
+        PTRACE(4, "SetOption(SO_REUSEADDR," << reuseAddr << ") failed: " << GetErrorText()
+                    << "; " << bindAddr << ":" << newPort);
+        os_close();
+        return false;
+    }
 
 #if P_HAS_IPV6 && defined(IPV6_V6ONLY)
-  if (bindAddr.GetVersion() == 6) {
-    if (!SetOption(IPV6_V6ONLY, reuseAddr, IPPROTO_IPV6)) {
-      PTRACE(4, "SetOption(IPV6_V6ONLY," << reuseAddr << ") failed: " << GetErrorText());
+    if (bindAddr.GetVersion() == 6)
+    {
+        if (!SetOption(IPV6_V6ONLY, reuseAddr, IPPROTO_IPV6))
+        {
+            PTRACE(4, "SetOption(IPV6_V6ONLY," << reuseAddr << ") failed: " << GetErrorText()
+                        << "; " << bindAddr << ":" << newPort);
+        }
     }
-  }
 #endif
 
-  if (!ConvertOSError(::bind(os_handle, sa, sa.GetSize()))) {
-    PTRACE(4, "bind failed: " << GetErrorText());
-    os_close();
-    return false;
-  }
+    if (!ConvertOSError(::bind(os_handle, sa, sa.GetSize())))
+    {
+        PTRACE(4, "bind failed: " << GetErrorText() << "; " << bindAddr << ":" << newPort);
+        os_close();
+        return false;
+    }
 
-  if (port != 0)
+    if (port != 0)
+    {
+        return true;
+    }
+
+    socklen_t size = sa.GetSize();
+    if (!ConvertOSError(::getsockname(os_handle, sa, &size)))
+    {
+        PTRACE(4, "getsockname failed: " << GetErrorText() << "; " << bindAddr << ":" << newPort);
+        os_close();
+        return false;
+    }
+
+    port = sa.GetPort();
     return true;
-
-  socklen_t size = sa.GetSize();
-  if (!ConvertOSError(::getsockname(os_handle, sa, &size))) {
-    PTRACE(4, "getsockname failed: " << GetErrorText());
-    os_close();
-    return false;
-  }
-
-  port = sa.GetPort();
-  return true;
 }
-
-
-//////////////////////////////////////////////////////////////////////////////
 
 PIPSocket::QoS::QoS(QoSType type)
   : m_type(type)

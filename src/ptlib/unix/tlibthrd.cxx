@@ -760,6 +760,9 @@ void PThread::Terminate()
   PXAbortBlock();
   if (WaitForTermination(20))
     return;
+  
+  PTRACE(2, "PTLib\tForcing termination of thread id=0x" << hex << m_threadId << dec
+            << "; after WaitForTermination(20)");
 
 #if !defined(P_HAS_SEMAPHORES) && !defined(P_HAS_NAMED_SEMAPHORES)
   PAssertPTHREAD(pthread_mutex_lock, (&PX_WaitSemMutex));
@@ -770,6 +773,9 @@ void PThread::Terminate()
     PX_waitingSemaphore = NULL;
   }
   PAssertPTHREAD(pthread_mutex_unlock, (&PX_WaitSemMutex));
+
+  PTRACE(2, "PTLib\tForcing termination of thread id=0x" << hex << m_threadId << dec
+            << "; after some stuff with semaphores");
 #endif
 
   if (m_threadId != PNullThreadIdentifier) {
@@ -779,6 +785,9 @@ void PThread::Terminate()
       return;
     // get more forceful
 #endif
+
+  PTRACE(2, "PTLib\tForcing termination of thread id=0x" << hex << m_threadId << dec
+            << "; after pthread_cancel, but before SIGKILL!11");
 
     pthread_kill(m_threadId, SIGKILL);
   }

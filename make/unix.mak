@@ -588,7 +588,7 @@ LDFLAGS		+= $(DEBLDFLAGS)
 
 else
 
-PTLIB_CFLAGS	+= -DNDEBUG -D_FORTIFY_SOURCE=2
+PTLIB_CFLAGS	+= $(DEBUG_INFO_FLAGS) -DNDEBUG -D_FORTIFY_SOURCE=2
 
 ifneq ($(target_os),Darwin)
   ifeq ($(target_os),solaris)
